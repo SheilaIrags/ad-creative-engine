@@ -1,144 +1,181 @@
-"use client"
-
-import dynamic from "next/dynamic"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ImageIcon, Sparkles } from "lucide-react"
+import { Sparkles, Wand2, Download, ArrowRight } from "lucide-react"
 
-// Dynamic import to avoid SSR issues with Konva
-const ImageEditor = dynamic(
-  () => import("@/components/image-editor").then((mod) => mod.ImageEditor),
-  { ssr: false }
-)
-
-const SAMPLE_IMAGES = [
-  {
-    url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
-    label: "Mountain Landscape",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=1200&q=80",
-    label: "Code Editor",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80",
-    label: "Abstract Art",
-  },
-]
-
-export default function Home() {
-  const [imageUrl, setImageUrl] = useState(SAMPLE_IMAGES[0].url)
-  const [inputUrl, setInputUrl] = useState("")
-  const [isEditing, setIsEditing] = useState(false)
-
-  const handleLoadImage = () => {
-    if (inputUrl.trim()) {
-      setImageUrl(inputUrl.trim())
-      setIsEditing(true)
-    }
-  }
-
-  const handleSampleImage = (url: string) => {
-    setImageUrl(url)
-    setInputUrl(url)
-    setIsEditing(true)
-  }
-
+export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">
-            Image Text Overlay Editor
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Add draggable headlines, overlay text, and CTAs to your images
-          </p>
-        </div>
-
-        {!isEditing ? (
-          <div className="max-w-2xl mx-auto space-y-6">
-            {/* URL Input */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" />
-                  Load Your Image
-                </CardTitle>
-                <CardDescription>
-                  Enter an image URL or choose from our samples below
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="https://example.com/image.jpg"
-                    value={inputUrl}
-                    onChange={(e) => setInputUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleLoadImage()}
-                  />
-                  <Button onClick={handleLoadImage} disabled={!inputUrl.trim()}>
-                    Load
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sample Images */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Sample Images
-                </CardTitle>
-                <CardDescription>
-                  Click any image to start editing
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {SAMPLE_IMAGES.map((sample) => (
-                    <button
-                      key={sample.url}
-                      onClick={() => handleSampleImage(sample.url)}
-                      className="group relative aspect-video rounded-lg overflow-hidden border border-border hover:border-primary transition-colors"
-                    >
-                      <img
-                        src={sample.url}
-                        alt={sample.label}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                        <span className="text-white text-sm font-medium">
-                          {sample.label}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <header className="border-b border-border/40">
+        <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold text-foreground">Ktizai</span>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Back button and current image */}
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                ← Back to Image Selection
-              </Button>
-              <p className="text-sm text-muted-foreground truncate max-w-md">
-                {imageUrl}
+          <Link href="/generate">
+            <Button variant="outline" size="sm">
+              Get Started
+            </Button>
+          </Link>
+        </nav>
+      </header>
+
+      <main>
+        {/* Hero Section */}
+        <section className="relative py-24 md:py-32 overflow-hidden">
+          {/* Gradient orb background effect */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/30 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-accent/20 rounded-full blur-[100px] pointer-events-none" />
+          
+          <div className="container relative mx-auto px-6">
+            <div className="max-w-4xl mx-auto text-center">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">AI-Powered Creative Generation</span>
+              </div>
+              
+              {/* Headline */}
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground mb-6 text-balance">
+                Create Stunning Ad Creatives in{" "}
+                <span className="text-primary">Seconds</span>
+              </h1>
+              
+              {/* Subheadline */}
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty">
+                Describe your vision and get 5 unique ad creative angles instantly. 
+                Add a reference image if you have one, or let AI do all the work.
+              </p>
+              
+              {/* CTA Button */}
+              <Link href="/generate">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Start Creating
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              
+              {/* Trust indicator */}
+              <p className="mt-6 text-sm text-muted-foreground">
+                No credit card required. Start free today.
+              </p>
+            </div>
+          </div>
+          
+          </section>
+
+        {/* How It Works Section */}
+        <section className="relative py-24 border-t border-border/40 overflow-hidden">
+          {/* Subtle background accent */}
+          <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+          
+          <div className="container relative mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                How It Works
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+                Create professional ad creatives in three simple steps
               </p>
             </div>
 
-            {/* Editor */}
-            <ImageEditor imageUrl={imageUrl} width={900} height={600} />
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {/* Step 1 */}
+              <div className="relative group">
+                <div className="p-8 rounded-2xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+                    <Wand2 className="h-7 w-7 text-primary" />
+                  </div>
+                  <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    1
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                    Describe Your Vision
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Enter a prompt describing your ad creative. Optionally upload a reference image for inspiration.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="relative group">
+                <div className="p-8 rounded-2xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+                    <Sparkles className="h-7 w-7 text-primary" />
+                  </div>
+                  <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    2
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                    Get 5 Unique Angles
+                  </h3>
+                  <p className="text-muted-foreground">
+                    AI generates 5 different creative variations, each with a unique angle to test what resonates.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="relative group">
+                <div className="p-8 rounded-2xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+                    <Download className="h-7 w-7 text-primary" />
+                  </div>
+                  <div className="absolute -top-3 -left-3 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    3
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                    Pick and Download
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Choose your favorite creatives and download them in high resolution, ready for any platform.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-    </main>
+        </section>
+
+        {/* Bottom CTA Section */}
+        <section className="py-24 border-t border-border/40">
+          <div className="container mx-auto px-6">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Ready to Transform Your Ads?
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Join thousands of marketers creating high-converting ad creatives with Ktizai.
+              </p>
+              <Link href="/generate">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-primary hover:bg-primary/90 text-primary-foreground">
+                  Start Creating Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40 py-8">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="text-sm font-medium text-foreground">Ktizai</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Built with AI. Designed for marketers.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   )
 }
