@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,6 +22,7 @@ const LOADING_STEPS = [
 ]
 
 export default function GeneratePage() {
+  const router = useRouter()
   const [brief, setBrief] = useState("")
   const [platform, setPlatform] = useState("instagram")
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
@@ -92,11 +94,9 @@ export default function GeneratePage() {
 
       if (elapsed >= totalDuration) {
         clearInterval(progressInterval)
-        // Reset after completion (in real app, would show results)
+        // Navigate to results page after completion
         setTimeout(() => {
-          setIsGenerating(false)
-          setProgress(0)
-          setLoadingStep(0)
+          router.push("/results")
         }, 500)
       }
     }, 50)
