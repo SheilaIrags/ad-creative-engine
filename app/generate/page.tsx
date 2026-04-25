@@ -74,11 +74,48 @@ export default function GeneratePage() {
     }
   }, [])
 
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     setIsGenerating(true)
     setLoadingStep(0)
     setProgress(0)
-  }, [])
+
+    try {
+      const referenceImageBase64 = uploadedImage?.includes(",")
+        ? uploadedImage.split(",")[1]
+        : uploadedImage ?? undefined
+
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: brief,
+          platform,
+          reference_image_base64: referenceImageBase64,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to generate ads")
+      }
+
+      const results = Array.isArray(data) ? data : data?.results
+      if (!Array.isArray(results)) {
+        throw new Error("Invalid response format from generation API")
+      }
+
+      localStorage.setItem("ktizai_results", JSON.stringify(results))
+      router.push("/results")
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong"
+      console.error("Generation failed:", error)
+      alert(message)
+      setIsGenerating(false)
+    }
+  }, [brief, platform, uploadedImage, router])
 
   // Loading animation effect
   useEffect(() => {
@@ -89,16 +126,9 @@ export default function GeneratePage() {
 
     const progressInterval = setInterval(() => {
       elapsed += 50
-      const newProgress = Math.min((elapsed / totalDuration) * 100, 100)
+      const loopedElapsed = elapsed % totalDuration
+      const newProgress = (loopedElapsed / totalDuration) * 100
       setProgress(newProgress)
-
-      if (elapsed >= totalDuration) {
-        clearInterval(progressInterval)
-        // Navigate to results page after completion
-        setTimeout(() => {
-          router.push("/results")
-        }, 500)
-      }
     }, 50)
 
     // Step progression
@@ -108,8 +138,8 @@ export default function GeneratePage() {
       stepElapsed += 100
       const currentStepDuration = LOADING_STEPS[currentStep]?.duration || 0
       
-      if (stepElapsed >= currentStepDuration && currentStep < LOADING_STEPS.length - 1) {
-        currentStep++
+      if (stepElapsed >= currentStepDuration) {
+        currentStep = (currentStep + 1) % LOADING_STEPS.length
         setLoadingStep(currentStep)
         stepElapsed = 0
       }

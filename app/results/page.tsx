@@ -6,44 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowLeft, Download, RefreshCw, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Mock data for the generated ads
-const MOCK_ADS = [
-  {
-    id: "1",
-    angle: "Social Proof",
-    headline: "Join 10,000+ Happy Customers",
-    cta: "Start Free Trial",
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop",
-  },
-  {
-    id: "2",
-    angle: "Fear of Missing Out",
-    headline: "Limited Time: 50% Off Today Only",
-    cta: "Claim Your Discount",
-    image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=800&fit=crop",
-  },
-  {
-    id: "3",
-    angle: "Problem-Solution",
-    headline: "Tired of Wasting Time? We Fixed It.",
-    cta: "See How It Works",
-    image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=800&fit=crop",
-  },
-  {
-    id: "4",
-    angle: "Aspirational",
-    headline: "Become the Best Version of Yourself",
-    cta: "Transform Today",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=800&fit=crop",
-  },
-  {
-    id: "5",
-    angle: "Direct Benefit",
-    headline: "Save 10 Hours Every Week, Guaranteed",
-    cta: "Get Started Now",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=800&fit=crop",
-  },
-]
+type GeneratedAd = {
+  image_url: string
+  angle: string
+  headline: string
+  primary_text: string
+  overlay_text: string
+  cta: string
+  direction_name: string
+}
 
 function SkeletonCard() {
   return (
@@ -74,7 +45,7 @@ function AdCard({
   onEdit,
   onRegenerate,
 }: {
-  ad: typeof MOCK_ADS[0]
+  ad: GeneratedAd
   onEdit: () => void
   onRegenerate: () => void
 }) {
@@ -94,7 +65,7 @@ function AdCard({
       {/* Image */}
       <div className="relative aspect-square overflow-hidden">
         <img
-          src={ad.image}
+          src={ad.image_url}
           alt={ad.headline}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -104,7 +75,7 @@ function AdCard({
         {/* Angle badge */}
         <div className="absolute top-4 left-4">
           <span className="px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-semibold backdrop-blur-sm">
-            {ad.angle}
+            {ad.direction_name || ad.angle}
           </span>
         </div>
       </div>
@@ -115,6 +86,9 @@ function AdCard({
           <h3 className="text-lg font-semibold text-foreground leading-tight">
             {ad.headline}
           </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {ad.primary_text}
+          </p>
           <p className="text-sm text-muted-foreground">
             CTA: <span className="text-primary font-medium">{ad.cta}</span>
           </p>
@@ -147,30 +121,35 @@ function AdCard({
 export default function ResultsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showResults, setShowResults] = useState(false)
-  const [ads, setAds] = useState<typeof MOCK_ADS>([])
+  const [ads, setAds] = useState<GeneratedAd[]>([])
 
-  // Simulate loading then transition to results
+  // Load generated ads from localStorage
   useEffect(() => {
-    // Simulate the AI generation time (shorter for demo)
-    const loadingTimer = setTimeout(() => {
+    try {
+      const storedResults = localStorage.getItem("ktizai_results")
+      if (storedResults) {
+        const parsed = JSON.parse(storedResults)
+        if (Array.isArray(parsed)) {
+          setAds(parsed)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to read stored results:", error)
+    } finally {
       setIsLoading(false)
-      setAds(MOCK_ADS)
-      // Small delay before showing results for smooth transition
       setTimeout(() => setShowResults(true), 100)
-    }, 4000) // 4 second loading simulation for demo
-
-    return () => clearTimeout(loadingTimer)
+    }
   }, [])
 
-  const handleEdit = (ad: typeof MOCK_ADS[0]) => {
+  const handleEdit = (ad: GeneratedAd) => {
     // Collect all CTAs from all ads
     const ctaOptions = ads.map((a) => a.cta)
     
     // Build URL with all the data
     const params = new URLSearchParams({
-      image_url: ad.image,
+      image_url: ad.image_url,
       headline: ad.headline,
-      overlay_text: ad.angle,
+      overlay_text: ad.overlay_text,
       cta: ad.cta,
       cta_options: JSON.stringify(ctaOptions),
     })
@@ -262,18 +241,18 @@ export default function ResultsPage() {
                 Your Ad Creatives Are Ready
               </h1>
               <p className="text-muted-foreground">
-                5 unique angles generated. Edit, download, or regenerate any creative.
+                {ads.length} unique angles generated. Edit, download, or regenerate any creative.
               </p>
             </div>
 
             {/* Results grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {ads.map((ad) => (
+              {ads.map((ad, index) => (
                 <AdCard
-                  key={ad.id}
+                  key={`${ad.direction_name}-${index}`}
                   ad={ad}
                   onEdit={() => handleEdit(ad)}
-                  onRegenerate={() => handleRegenerate(ad.id)}
+                  onRegenerate={() => handleRegenerate(`${ad.direction_name}-${index}`)}
                 />
               ))}
             </div>
