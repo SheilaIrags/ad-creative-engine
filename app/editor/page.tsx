@@ -6,6 +6,19 @@ import Link from "next/link"
 import { Sparkles, ArrowLeft } from "lucide-react"
 import { ImageEditorWithData } from "@/components/image-editor-with-data"
 
+function parseCtaOptions(raw: string | null, fallbackCta: string): string[] {
+  if (!raw) return [fallbackCta]
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (Array.isArray(parsed) && parsed.every((item): item is string => typeof item === "string")) {
+      return parsed.length > 0 ? parsed : [fallbackCta]
+    }
+  } catch {
+    // ignore malformed query param
+  }
+  return [fallbackCta]
+}
+
 function EditorContent() {
   const searchParams = useSearchParams()
   
@@ -13,8 +26,7 @@ function EditorContent() {
   const headline = searchParams.get("headline") || "Your Headline Here"
   const overlayText = searchParams.get("overlay_text") || "Overlay Text"
   const cta = searchParams.get("cta") || "Call to Action"
-  const ctaOptionsRaw = searchParams.get("cta_options")
-  const ctaOptions = ctaOptionsRaw ? JSON.parse(ctaOptionsRaw) : [cta]
+  const ctaOptions = parseCtaOptions(searchParams.get("cta_options"), cta)
 
   if (!imageUrl) {
     return (

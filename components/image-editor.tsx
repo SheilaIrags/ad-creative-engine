@@ -24,19 +24,22 @@ interface ImageEditorProps {
   imageUrl: string
   width?: number
   height?: number
+  headline?: string
+  overlayText?: string
+  cta?: string
+  /** Alternate CTA lines; shown as quick picks for the CTA overlay */
+  ctaOptions?: string[]
 }
 
-export function ImageEditor({ imageUrl, width = 800, height = 600 }: ImageEditorProps) {
-  const stageRef = useRef<Konva.Stage>(null)
-  const transformerRef = useRef<Konva.Transformer>(null)
-  const [image, setImage] = useState<HTMLImageElement | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [stageSize, setStageSize] = useState({ width, height })
-
-  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>([
+function defaultOverlays(
+  headline: string,
+  overlayText: string,
+  cta: string
+): TextOverlay[] {
+  return [
     {
       id: "headline",
-      text: "Your Headline Here",
+      text: headline,
       x: 50,
       y: 50,
       fontSize: 48,
@@ -45,7 +48,7 @@ export function ImageEditor({ imageUrl, width = 800, height = 600 }: ImageEditor
     },
     {
       id: "overlay",
-      text: "Overlay Text",
+      text: overlayText,
       x: 50,
       y: 150,
       fontSize: 32,
@@ -54,14 +57,47 @@ export function ImageEditor({ imageUrl, width = 800, height = 600 }: ImageEditor
     },
     {
       id: "cta",
-      text: "Call to Action",
+      text: cta,
       x: 50,
       y: 250,
       fontSize: 28,
       fill: "#ffcc00",
       fontStyle: "bold",
     },
-  ])
+  ]
+}
+
+export function ImageEditor({
+  imageUrl,
+  width = 800,
+  height = 600,
+  headline = "Your Headline Here",
+  overlayText = "Overlay Text",
+  cta = "Call to Action",
+  ctaOptions,
+}: ImageEditorProps) {
+  const resolvedCtaOptions =
+    ctaOptions && ctaOptions.length > 0 ? ctaOptions : [cta]
+  const stageRef = useRef<Konva.Stage>(null)
+  const transformerRef = useRef<Konva.Transformer>(null)
+  const [image, setImage] = useState<HTMLImageElement | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [stageSize, setStageSize] = useState({ width, height })
+
+  const [textOverlays, setTextOverlays] = useState<TextOverlay[]>(() =>
+    defaultOverlays(headline, overlayText, cta)
+  )
+
+  // Keep canvas copy in sync when URL / parent props change
+  useEffect(() => {
+    setTextOverlays((prev) => {
+      const nextDefaults = defaultOverlays(headline, overlayText, cta)
+      return nextDefaults.map((d) => {
+        const existing = prev.find((o) => o.id === d.id)
+        return existing ? { ...existing, text: d.text } : d
+      })
+    })
+  }, [headline, overlayText, cta])
 
   // Load image
   useEffect(() => {
@@ -100,7 +136,7 @@ export function ImageEditor({ imageUrl, width = 800, height = 600 }: ImageEditor
     setSelectedId(id)
   }, [])
 
-  const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleStageClick = useCallback((e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (e.target === e.target.getStage()) {
       setSelectedId(null)
       transformerRef.current?.nodes([])
@@ -262,6 +298,26 @@ export function ImageEditor({ imageUrl, width = 800, height = 600 }: ImageEditor
                   className="text-sm"
                   placeholder={`Enter ${overlay.id} text`}
                 />
+                {overlay.id === "cta" && resolvedCtaOptions.length > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {resolvedCtaOptions.map((option) => (
+                      <Button
+                        key={option}
+                        type="button"
+                        variant={overlay.text === option ? "default" : "outline"}
+                        size="sm"
+                        className="h-7 text-xs max-w-full truncate"
+                        title={option}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          updateOverlay("cta", { text: option })
+                        }}
+                      >
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </CardContent>
