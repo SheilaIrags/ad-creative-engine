@@ -7,13 +7,13 @@ import { Sparkles, ArrowLeft, Download, RefreshCw, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type GeneratedAd = {
-  image_url: string
-  angle: string
-  headline: string
-  primary_text: string
-  overlay_text: string
-  cta: string
-  direction_name: string
+  image_url?: string
+  angle?: string
+  headline?: string
+  primary_text?: string
+  overlay_text?: string
+  cta?: string
+  direction_name?: string
 }
 
 function SkeletonCard() {
@@ -65,33 +65,43 @@ function AdCard({
       {/* Image */}
       <div className="relative aspect-square overflow-hidden">
         <img
-          src={ad.image_url}
-          alt={ad.headline}
+          src={ad.image_url || "/placeholder.svg"}
+          alt={ad.headline || "Generated ad image"}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
         {/* Angle badge */}
-        <div className="absolute top-4 left-4">
-          <span className="px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-semibold backdrop-blur-sm">
-            {ad.direction_name || ad.angle}
-          </span>
-        </div>
+        {(ad.direction_name || ad.angle) && (
+          <div className="absolute top-4 left-4">
+            <span className="px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-semibold backdrop-blur-sm">
+              {ad.direction_name || ad.angle}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-4">
-        <div className="space-y-1.5">
-          <h3 className="text-lg font-semibold text-foreground leading-tight">
-            {ad.headline}
-          </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {ad.primary_text}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            CTA: <span className="text-primary font-medium">{ad.cta}</span>
-          </p>
+      <div className="p-6 space-y-4 bg-card">
+        <div className="space-y-3">
+          {ad.headline && (
+            <h3 className="text-base md:text-lg font-semibold text-white leading-snug">
+              {ad.headline}
+            </h3>
+          )}
+          {ad.primary_text && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {ad.primary_text}
+            </p>
+          )}
+          {ad.cta && (
+            <div>
+              <span className="inline-flex px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-semibold">
+                {ad.cta}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -123,18 +133,18 @@ export default function ResultsPage() {
   const [showResults, setShowResults] = useState(false)
   const [ads, setAds] = useState<GeneratedAd[]>([])
 
-  // Load generated ads from localStorage
+  // Load generated results from localStorage
   useEffect(() => {
     try {
       const storedResults = localStorage.getItem("ktizai_results")
       if (storedResults) {
-        const parsed = JSON.parse(storedResults)
-        if (Array.isArray(parsed)) {
-          setAds(parsed)
+        const parsedResults = JSON.parse(storedResults)
+        if (Array.isArray(parsedResults)) {
+          setAds(parsedResults)
         }
       }
     } catch (error) {
-      console.error("Failed to read stored results:", error)
+      console.error("Failed to load results:", error)
     } finally {
       setIsLoading(false)
       setTimeout(() => setShowResults(true), 100)
@@ -143,14 +153,14 @@ export default function ResultsPage() {
 
   const handleEdit = (ad: GeneratedAd) => {
     // Collect all CTAs from all ads
-    const ctaOptions = ads.map((a) => a.cta)
+    const ctaOptions = ads.map((a) => a.cta).filter((cta): cta is string => Boolean(cta))
     
     // Build URL with all the data
     const params = new URLSearchParams({
-      image_url: ad.image_url,
-      headline: ad.headline,
-      overlay_text: ad.overlay_text,
-      cta: ad.cta,
+      image_url: ad.image_url || "",
+      headline: ad.headline || "",
+      overlay_text: ad.overlay_text || "",
+      cta: ad.cta || "",
       cta_options: JSON.stringify(ctaOptions),
     })
     
@@ -249,10 +259,10 @@ export default function ResultsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {ads.map((ad, index) => (
                 <AdCard
-                  key={`${ad.direction_name}-${index}`}
+                  key={`${ad.direction_name || ad.angle || "ad"}-${index}`}
                   ad={ad}
                   onEdit={() => handleEdit(ad)}
-                  onRegenerate={() => handleRegenerate(`${ad.direction_name}-${index}`)}
+                  onRegenerate={() => handleRegenerate(`${ad.direction_name || ad.angle || "ad"}-${index}`)}
                 />
               ))}
             </div>
