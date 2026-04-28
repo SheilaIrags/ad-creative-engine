@@ -305,7 +305,7 @@ export default function GeneratePage() {
                 className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
-                Generate 5 ad angles
+                Generate 3 ad angles
               </Button>
               {!canGenerate && (
                 <p className="text-center text-sm text-muted-foreground mt-3">
