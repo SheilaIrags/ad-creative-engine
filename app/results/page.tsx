@@ -234,7 +234,7 @@ export default function ResultsPage() {
 
             {/* Skeleton grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {Array.from({ length: 5 }).map((_, i) => (
+              {Array.from({ length: 3 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
             </div>
