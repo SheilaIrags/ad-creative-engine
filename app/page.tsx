@@ -45,7 +45,7 @@ export default function LandingPage() {
               
               {/* Subheadline */}
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty">
-                Describe your vision and get 5 unique ad creative angles instantly. 
+                Describe your vision and get 3 unique ad creative angles instantly. 
                 Add a reference image if you have one, or let AI do all the work.
               </p>
               
@@ -110,10 +110,10 @@ export default function LandingPage() {
                     2
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">
-                    Get 5 Unique Angles
+                    Get 3 Unique Angles
                   </h3>
                   <p className="text-muted-foreground">
-                    AI generates 5 different creative variations, each with a unique angle to test what resonates.
+                    AI generates 3 different creative variations, each with a unique angle to test what resonates.
                   </p>
                 </div>
               </div>
