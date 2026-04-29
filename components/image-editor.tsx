@@ -71,9 +71,9 @@ export function ImageEditor({
   imageUrl,
   width = 800,
   height = 600,
-  headline = "Your Headline Here",
-  overlayText = "Overlay Text",
-  cta = "Call to Action",
+  headline = "",
+  overlayText = "",
+  cta = "",
   ctaOptions,
 }: ImageEditorProps) {
   const resolvedCtaOptions = Array.from(
@@ -296,8 +296,8 @@ export function ImageEditor({
                     variant={isActive ? "default" : "outline"}
                     className={`h-8 rounded-full px-3 text-xs max-w-full truncate ${
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "border-primary/50 text-primary hover:bg-primary/10"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
                     }`}
                     title={option}
                     onClick={() => {

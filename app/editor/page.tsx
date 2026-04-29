@@ -16,33 +16,32 @@ type GenerationResult = {
   direction_name?: string
 }
 
-function parseResultsPayload(input: unknown): GenerationResult[] {
-  let value = input
+function parseResultsPayload(input: unknown, depth = 0): GenerationResult[] {
+  if (depth > 5 || input == null) {
+    return []
+  }
 
-  if (typeof value === "string") {
+  if (Array.isArray(input)) {
+    return input as GenerationResult[]
+  }
+
+  if (typeof input === "string") {
     try {
-      value = JSON.parse(value)
+      return parseResultsPayload(JSON.parse(input), depth + 1)
     } catch {
       return []
     }
   }
 
-  if (Array.isArray(value)) {
-    return value as GenerationResult[]
-  }
+  if (typeof input === "object") {
+    const maybeNested = input as { results?: unknown; data?: unknown }
 
-  if (value && typeof value === "object") {
-    const nested = (value as { results?: unknown }).results
-    if (Array.isArray(nested)) {
-      return nested as GenerationResult[]
+    if ("results" in maybeNested) {
+      return parseResultsPayload(maybeNested.results, depth + 1)
     }
-    if (typeof nested === "string") {
-      try {
-        const parsedNested = JSON.parse(nested)
-        return Array.isArray(parsedNested) ? (parsedNested as GenerationResult[]) : []
-      } catch {
-        return []
-      }
+
+    if ("data" in maybeNested) {
+      return parseResultsPayload(maybeNested.data, depth + 1)
     }
   }
 
@@ -87,6 +86,7 @@ function EditorContent() {
         })
 
         const json = await res.json()
+        console.log("Editor results API response:", json)
         if (!res.ok) {
           throw new Error(json?.message || "Failed to load generation results")
         }
@@ -110,7 +110,7 @@ function EditorContent() {
       )
       const fallbackCtas = selected?.cta ? [selected.cta] : []
 
-      if (!selected?.image_url) {
+      if (!selected) {
         if (!cancelled) {
           setErrorMessage("Could not find the selected variation.")
           setIsLoading(false)
@@ -120,9 +120,9 @@ function EditorContent() {
 
       if (!cancelled) {
         setImageUrl(selected.image_url || "")
-        setHeadline(selected.headline || "Your Headline Here")
-        setOverlayText(selected.overlay_text || "Overlay Text")
-        setCta(selected.cta || "Call to Action")
+        setHeadline(selected.headline || "")
+        setOverlayText(selected.overlay_text || "")
+        setCta(selected.cta || "")
         setCtaOptions(allCtas.length > 0 ? allCtas : fallbackCtas)
         setIsLoading(false)
       }
