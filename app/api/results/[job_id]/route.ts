@@ -21,7 +21,12 @@ export async function GET(
       .eq("job_id", job_id)
       .single()
 
+    // `.single()` throws when there are 0 rows; treat "not created yet" as pending.
     if (error) {
+      // Supabase/PostgREST error code for "Results contain 0 rows"
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ status: "pending", results: null })
+      }
       throw new Error(error.message)
     }
 
