@@ -124,9 +124,7 @@ export default function GeneratePage() {
         }
 
         if (pollData?.status === "complete") {
-          const results = Array.isArray(pollData?.results) ? pollData.results : []
-          localStorage.setItem("ktizai_results", JSON.stringify(results))
-          router.push("/results")
+          router.push(`/results?job_id=${jobId}`)
           return
         }
       }

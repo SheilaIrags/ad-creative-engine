@@ -2,9 +2,11 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowLeft, Download, RefreshCw, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createClient } from "@supabase/supabase-js"
 
 type GeneratedAd = {
   image_url?: string
@@ -129,27 +131,76 @@ function AdCard({
 }
 
 export default function ResultsPage() {
+  const searchParams = useSearchParams()
+  const jobId = searchParams.get("job_id")
+
   const [isLoading, setIsLoading] = useState(true)
   const [showResults, setShowResults] = useState(false)
   const [ads, setAds] = useState<GeneratedAd[]>([])
 
-  // Load generated results from localStorage
   useEffect(() => {
-    try {
-      const storedResults = localStorage.getItem("ktizai_results")
-      if (storedResults) {
-        const parsedResults = JSON.parse(storedResults)
-        if (Array.isArray(parsedResults)) {
-          setAds(parsedResults)
-        }
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoading(true)
+      setShowResults(false)
+
+      const supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined
+      const supabaseKey =
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string | undefined
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error(
+          "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+        )
       }
-    } catch (error) {
-      console.error("Failed to load results:", error)
-    } finally {
+
+      if (!jobId) {
+        setAds([])
+        setIsLoading(false)
+        setTimeout(() => setShowResults(true), 100)
+        return
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseKey)
+
+      // Fetch stored generation results for this job_id
+      const { data, error } = await supabase
+        .from("generations")
+        .select("results")
+        .eq("job_id", jobId)
+        .single()
+
+      if (error) {
+        // Row might not exist yet; treat it as pending/empty.
+        if (error.code === "PGRST116") {
+          setAds([])
+          setIsLoading(false)
+          setTimeout(() => setShowResults(true), 100)
+          return
+        }
+        throw new Error(error.message)
+      }
+
+      const results = data?.results
+      setAds(Array.isArray(results) ? results : [])
       setIsLoading(false)
       setTimeout(() => setShowResults(true), 100)
     }
-  }, [])
+
+    load().catch((error) => {
+      if (cancelled) return
+      console.error("Failed to load results:", error)
+      setAds([])
+      setIsLoading(false)
+      setTimeout(() => setShowResults(true), 100)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [jobId])
 
   const handleEdit = (ad: GeneratedAd) => {
     // Collect all CTAs from all ads
