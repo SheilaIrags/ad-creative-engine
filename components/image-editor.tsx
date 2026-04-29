@@ -333,6 +333,7 @@ export function ImageEditor({
                     <div className="flex flex-wrap gap-1.5">
                       {getSuggestionsForOverlay(overlay.id).map((option) => {
                         const isActive = overlay.text === option
+                        const isCta = overlay.id === "cta"
                         return (
                           <Button
                             key={`${overlay.id}-${option}`}
@@ -340,9 +341,13 @@ export function ImageEditor({
                             size="sm"
                             variant={isActive ? "default" : "outline"}
                             className={`h-7 rounded-full px-2.5 text-[11px] max-w-full truncate ${
-                              isActive
-                                ? "bg-primary text-primary-foreground border-primary"
-                                : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                              isCta
+                                ? isActive
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                                : isActive
+                                ? "bg-muted text-foreground border-border"
+                                : "border-border bg-muted/60 text-muted-foreground hover:bg-muted"
                             }`}
                             title={option}
                             onClick={(e) => {

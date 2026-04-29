@@ -16,38 +16,6 @@ type GenerationResult = {
   direction_name?: string
 }
 
-function parseResultsPayload(input: unknown, depth = 0): GenerationResult[] {
-  if (depth > 5 || input == null) {
-    return []
-  }
-
-  if (Array.isArray(input)) {
-    return input as GenerationResult[]
-  }
-
-  if (typeof input === "string") {
-    try {
-      return parseResultsPayload(JSON.parse(input), depth + 1)
-    } catch {
-      return []
-    }
-  }
-
-  if (typeof input === "object") {
-    const maybeNested = input as { results?: unknown; data?: unknown }
-
-    if ("results" in maybeNested) {
-      return parseResultsPayload(maybeNested.results, depth + 1)
-    }
-
-    if ("data" in maybeNested) {
-      return parseResultsPayload(maybeNested.data, depth + 1)
-    }
-  }
-
-  return []
-}
-
 function EditorContent() {
   const searchParams = useSearchParams()
   const jobId = searchParams.get("job_id")
@@ -77,28 +45,28 @@ function EditorContent() {
         return
       }
 
+      const res = await fetch(`/api/results/${jobId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      const json = await res.json()
+      console.log("Editor results API response:", json)
+      if (!res.ok) {
+        throw new Error(json?.message || "Failed to load generation results")
+      }
+
+      // API shape: { status, results }
+      // Read from json.results directly.
       let resultsArray: GenerationResult[] = []
-      const maxAttempts = 30
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const res = await fetch(`/api/results/${jobId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-
-        const json = await res.json()
-        console.log("Editor results API response:", json)
-        if (!res.ok) {
-          throw new Error(json?.message || "Failed to load generation results")
-        }
-
-        resultsArray = parseResultsPayload(json?.results)
-        if (json?.status === "complete" && resultsArray.length > 0) {
-          break
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+      if (Array.isArray(json?.results)) {
+        resultsArray = json.results as GenerationResult[]
+      } else if (typeof json?.results === "string") {
+        // Some rows may still store results as stringified JSON.
+        const parsed = JSON.parse(json.results) as unknown
+        resultsArray = Array.isArray(parsed) ? (parsed as GenerationResult[]) : []
       }
 
       const selected = resultsArray[variationIndex]
