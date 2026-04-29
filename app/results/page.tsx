@@ -172,6 +172,8 @@ export default function ResultsPage() {
         .eq("job_id", jobId)
         .single()
 
+      console.log("Supabase generations raw data:", data)
+
       if (error) {
         // Row might not exist yet; treat it as pending/empty.
         if (error.code === "PGRST116") {
@@ -183,7 +185,11 @@ export default function ResultsPage() {
         throw new Error(error.message)
       }
 
-      const results = data?.results
+      let results = data?.results
+      if (typeof results === "string") {
+        results = JSON.parse(results)
+      }
+
       setAds(Array.isArray(results) ? results : [])
       setIsLoading(false)
       setTimeout(() => setShowResults(true), 100)
