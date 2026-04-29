@@ -238,22 +238,6 @@ function ResultsContent() {
     }
   }, [jobId])
 
-  const handleEdit = (ad: GeneratedAd) => {
-    // Collect all CTAs from all ads
-    const ctaOptions = ads.map((a) => a.cta).filter((cta): cta is string => Boolean(cta))
-    
-    // Build URL with all the data
-    const params = new URLSearchParams({
-      image_url: ad.image_url || "",
-      headline: ad.headline || "",
-      overlay_text: ad.overlay_text || "",
-      cta: ad.cta || "",
-      cta_options: JSON.stringify(ctaOptions),
-    })
-    
-    window.location.href = `/editor?${params.toString()}`
-  }
-
   const handleRegenerate = (adId: string) => {
     // In a real app, this would call the API to regenerate
     console.log("Regenerating ad:", adId)
@@ -348,7 +332,10 @@ function ResultsContent() {
                 <AdCard
                   key={`${ad.direction_name || ad.angle || "ad"}-${index}`}
                   ad={ad}
-                  onEdit={() => handleEdit(ad)}
+                  onEdit={() => {
+                    if (!jobId) return
+                    window.location.href = `/editor?job_id=${jobId}&variation_index=${index}`
+                  }}
                   onRegenerate={() => handleRegenerate(`${ad.direction_name || ad.angle || "ad"}-${index}`)}
                 />
               ))}

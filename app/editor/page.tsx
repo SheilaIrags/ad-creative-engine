@@ -1,44 +1,129 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { Sparkles, ArrowLeft } from "lucide-react"
 import { ImageEditorWithData } from "@/components/image-editor-with-data"
 
-function parseCtaOptions(raw: string | null, fallbackCta: string): string[] {
-  if (!raw) return [fallbackCta]
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (Array.isArray(parsed) && parsed.every((item): item is string => typeof item === "string")) {
-      return parsed.length > 0 ? parsed : [fallbackCta]
-    }
-  } catch {
-    // ignore malformed query param
-  }
-  return [fallbackCta]
+type GenerationResult = {
+  image_url?: string
+  angle?: string
+  headline?: string
+  primary_text?: string
+  overlay_text?: string
+  cta?: string
+  direction_name?: string
 }
 
 function EditorContent() {
   const searchParams = useSearchParams()
-  
-  const imageUrl = searchParams.get("image_url") || ""
-  const headline = searchParams.get("headline") || "Your Headline Here"
-  const overlayText = searchParams.get("overlay_text") || "Overlay Text"
-  const cta = searchParams.get("cta") || "Call to Action"
-  const ctaOptions = parseCtaOptions(searchParams.get("cta_options"), cta)
+  const jobId = searchParams.get("job_id")
+  const variationIndexRaw = searchParams.get("variation_index")
+  const variationIndex = variationIndexRaw ? Number(variationIndexRaw) : NaN
 
-  if (!imageUrl) {
+  const [isLoading, setIsLoading] = useState(true)
+  const [imageUrl, setImageUrl] = useState("")
+  const [headline, setHeadline] = useState("")
+  const [overlayText, setOverlayText] = useState("")
+  const [cta, setCta] = useState("")
+  const [ctaOptions, setCtaOptions] = useState<string[]>([])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const load = async () => {
+      setIsLoading(true)
+      setErrorMessage(null)
+
+      if (!jobId || !Number.isFinite(variationIndex)) {
+        setErrorMessage("Missing job_id or variation_index.")
+        setIsLoading(false)
+        return
+      }
+
+      const res = await fetch(`/api/results/${jobId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      const json = await res.json()
+      if (!res.ok) {
+        throw new Error(json?.message || "Failed to load generation results")
+      }
+
+      let results = json?.results ?? []
+      if (typeof results === "string") {
+        results = JSON.parse(results)
+      }
+
+      const resultsArray = Array.isArray(results) ? (results as GenerationResult[]) : []
+      const selected = resultsArray[variationIndex]
+
+      const allCtas = Array.from(
+        new Set(
+          resultsArray
+            .map((r) => r.cta)
+            .filter((x): x is string => Boolean(x))
+        )
+      )
+      const fallbackCtas = selected?.cta ? [selected.cta] : []
+
+      if (!selected?.image_url) {
+        if (!cancelled) {
+          setErrorMessage("Could not find the selected variation.")
+          setIsLoading(false)
+        }
+        return
+      }
+
+      if (!cancelled) {
+        setImageUrl(selected.image_url || "")
+        setHeadline(selected.headline || "")
+        setOverlayText(selected.overlay_text || "")
+        setCta(selected.cta || "")
+        setCtaOptions(allCtas.length > 0 ? allCtas : fallbackCtas)
+        setIsLoading(false)
+      }
+    }
+
+    load()
+      .catch((err) => {
+        if (cancelled) return
+        setErrorMessage(err instanceof Error ? err.message : "Something went wrong")
+        setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [jobId, variationIndex])
+
+  if (errorMessage) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-muted-foreground">No image provided</p>
+          <p className="text-muted-foreground">{errorMessage}</p>
           <Link
-            href="/results"
+            href={jobId ? `/results?job_id=${jobId}` : "/results"}
             className="text-primary hover:underline"
           >
             Go back to results
           </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Sparkles className="h-10 w-10 text-primary animate-pulse mx-auto" />
+          <p className="text-muted-foreground">Loading editor data...</p>
         </div>
       </div>
     )
@@ -68,7 +153,7 @@ function EditorContent() {
         {/* Back link */}
         <div className="mb-6">
           <Link
-            href="/results"
+            href={jobId ? `/results?job_id=${jobId}` : "/results"}
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -270,6 +270,41 @@ export function ImageEditor({
 
       {/* Controls Panel */}
       <div className="w-full lg:w-80 space-y-4">
+        {/* CTA Options */}
+        {resolvedCtaOptions.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                CTA Options
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {resolvedCtaOptions.map((option) => (
+                  <Button
+                    key={option}
+                    type="button"
+                    size="sm"
+                    variant={
+                      textOverlays.find((o) => o.id === "cta")?.text === option
+                        ? "default"
+                        : "outline"
+                    }
+                    className="h-8 rounded-full px-3 text-xs max-w-full truncate"
+                    title={option}
+                    onClick={() => {
+                      setSelectedId("cta")
+                      updateOverlay("cta", { text: option })
+                    }}
+                  >
+                    {option}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Text Content Editor */}
         <Card>
           <CardHeader className="pb-3">
@@ -298,26 +333,6 @@ export function ImageEditor({
                   className="text-sm"
                   placeholder={`Enter ${overlay.id} text`}
                 />
-                {overlay.id === "cta" && resolvedCtaOptions.length > 1 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {resolvedCtaOptions.map((option) => (
-                      <Button
-                        key={option}
-                        type="button"
-                        variant={overlay.text === option ? "default" : "outline"}
-                        size="sm"
-                        className="h-7 text-xs max-w-full truncate"
-                        title={option}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          updateOverlay("cta", { text: option })
-                        }}
-                      >
-                        {option}
-                      </Button>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </CardContent>
