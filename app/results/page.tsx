@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowLeft, Download, RefreshCw, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { createClient } from "@supabase/supabase-js"
 
 type GeneratedAd = {
   image_url?: string
@@ -173,17 +172,6 @@ function ResultsContent() {
       setIsLoading(true)
       setShowResults(false)
 
-      const supabaseUrl =
-        process.env.NEXT_PUBLIC_SUPABASE_URL as string | undefined
-      const supabaseKey =
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY as string | undefined
-
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error(
-          "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
-        )
-      }
-
       if (!jobId) {
         setAds([])
         setIsLoading(false)
@@ -191,36 +179,50 @@ function ResultsContent() {
         return
       }
 
-      const supabase = createClient(supabaseUrl, supabaseKey)
+      // Poll our server endpoint until it becomes complete (avoids a race).
+      const pollUntilComplete = async () => {
+        const maxAttempts = 30 // ~90 seconds
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          if (cancelled) return
+          const res = await fetch(`/api/results/${jobId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
 
-      // Fetch stored generation results for this job_id
-      const { data, error } = await supabase
-        .from("generations")
-        .select("results")
-        .eq("job_id", jobId)
-        .single()
+          const json = await res.json()
+          console.log("Results API response:", json)
 
-      console.log("Supabase generations raw data:", data)
+          if (!res.ok) {
+            throw new Error(json?.message || "Failed to fetch results status")
+          }
 
-      if (error) {
-        // Row might not exist yet; treat it as pending/empty.
-        if (error.code === "PGRST116") {
-          setAds([])
-          setIsLoading(false)
-          setTimeout(() => setShowResults(true), 100)
-          return
+          if (json?.status === "complete") {
+            let results = json?.results ?? null
+            if (typeof results === "string") {
+              results = JSON.parse(results)
+            }
+
+            if (!cancelled) {
+              setAds(Array.isArray(results) ? results : [])
+              setIsLoading(false)
+              setTimeout(() => setShowResults(true), 100)
+            }
+            return
+          }
+
+          // wait 3 seconds then try again
+          await new Promise((r) => setTimeout(r, 3000))
         }
-        throw new Error(error.message)
+
+        if (!cancelled) {
+          setIsLoading(false)
+          setShowResults(true)
+        }
       }
 
-      let results = data?.results
-      if (typeof results === "string") {
-        results = JSON.parse(results)
-      }
-
-      setAds(Array.isArray(results) ? results : [])
-      setIsLoading(false)
-      setTimeout(() => setShowResults(true), 100)
+      await pollUntilComplete()
     }
 
     load().catch((error) => {

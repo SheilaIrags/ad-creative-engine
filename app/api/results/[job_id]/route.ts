@@ -30,9 +30,18 @@ export async function GET(
       throw new Error(error.message)
     }
 
+    let results = data?.results ?? null
+    if (typeof results === "string") {
+      try {
+        results = JSON.parse(results)
+      } catch (e) {
+        // If parsing fails, return the raw string.
+      }
+    }
+
     return NextResponse.json({
       status: data?.status ?? "pending",
-      results: data?.results ?? null,
+      results,
     })
   } catch (error) {
     const message =
