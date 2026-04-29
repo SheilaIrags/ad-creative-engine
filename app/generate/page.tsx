@@ -33,6 +33,8 @@ export default function GeneratePage() {
   const [progress, setProgress] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
   const handleFileSelect = useCallback((file: File) => {
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader()
@@ -101,13 +103,33 @@ export default function GeneratePage() {
         throw new Error(data?.message || "Failed to generate ads")
       }
 
-      const results = Array.isArray(data) ? data : data?.results
-      if (!Array.isArray(results)) {
-        throw new Error("Invalid response format from generation API")
+      const jobId = data?.job_id
+      if (!jobId || typeof jobId !== "string") {
+        throw new Error("No job_id returned from generation API")
       }
 
-      localStorage.setItem("ktizai_results", JSON.stringify(results))
-      router.push("/results")
+      while (true) {
+        await sleep(3000)
+
+        const pollResponse = await fetch(`/api/results/${jobId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+
+        const pollData = await pollResponse.json()
+        if (!pollResponse.ok) {
+          throw new Error(pollData?.message || "Failed to fetch generation status")
+        }
+
+        if (pollData?.status === "complete") {
+          const results = Array.isArray(pollData?.results) ? pollData.results : []
+          localStorage.setItem("ktizai_results", JSON.stringify(results))
+          router.push("/results")
+          return
+        }
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Something went wrong"
