@@ -27,6 +27,8 @@ interface ImageEditorProps {
   headline?: string
   overlayText?: string
   cta?: string
+  headlineOptions?: string[]
+  overlayOptions?: string[]
   /** Alternate CTA lines; shown as quick picks for the CTA overlay */
   ctaOptions?: string[]
 }
@@ -74,8 +76,28 @@ export function ImageEditor({
   headline = "",
   overlayText = "",
   cta = "",
+  headlineOptions,
+  overlayOptions,
   ctaOptions,
 }: ImageEditorProps) {
+  const resolvedHeadlineOptions = Array.from(
+    new Set(
+      (headlineOptions && headlineOptions.length > 0
+        ? headlineOptions
+        : [headline]).filter(
+        (option): option is string => Boolean(option && option.trim())
+      )
+    )
+  )
+  const resolvedOverlayOptions = Array.from(
+    new Set(
+      (overlayOptions && overlayOptions.length > 0
+        ? overlayOptions
+        : [overlayText]).filter(
+        (option): option is string => Boolean(option && option.trim())
+      )
+    )
+  )
   const resolvedCtaOptions = Array.from(
     new Set(
       (ctaOptions && ctaOptions.length > 0 ? ctaOptions : [cta]).filter(
@@ -194,6 +216,12 @@ export function ImageEditor({
   }, [])
 
   const selectedOverlay = textOverlays.find((o) => o.id === selectedId)
+  const getSuggestionsForOverlay = (overlayId: string) => {
+    if (overlayId === "headline") return resolvedHeadlineOptions
+    if (overlayId === "overlay") return resolvedOverlayOptions
+    if (overlayId === "cta") return resolvedCtaOptions
+    return []
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -275,46 +303,6 @@ export function ImageEditor({
 
       {/* Controls Panel */}
       <div className="w-full lg:w-80 space-y-4">
-        {/* CTA Options */}
-        {resolvedCtaOptions.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                CTA Options
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {resolvedCtaOptions.map((option) => (
-                  (() => {
-                    const isActive = textOverlays.find((o) => o.id === "cta")?.text === option
-                    return (
-                  <Button
-                    key={option}
-                    type="button"
-                    size="sm"
-                    variant={isActive ? "default" : "outline"}
-                    className={`h-8 rounded-full px-3 text-xs max-w-full truncate ${
-                      isActive
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
-                    }`}
-                    title={option}
-                    onClick={() => {
-                      setSelectedId("cta")
-                      updateOverlay("cta", { text: option })
-                    }}
-                  >
-                    {option}
-                  </Button>
-                    )
-                  })()
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Text Content Editor */}
         <Card>
           <CardHeader className="pb-3">
@@ -337,6 +325,39 @@ export function ImageEditor({
                 <Label className="text-xs text-muted-foreground capitalize mb-2 block">
                   {overlay.id === "cta" ? "CTA" : overlay.id}
                 </Label>
+                {getSuggestionsForOverlay(overlay.id).length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-[11px] text-muted-foreground mb-1">
+                      AI Suggestions
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {getSuggestionsForOverlay(overlay.id).map((option) => {
+                        const isActive = overlay.text === option
+                        return (
+                          <Button
+                            key={`${overlay.id}-${option}`}
+                            type="button"
+                            size="sm"
+                            variant={isActive ? "default" : "outline"}
+                            className={`h-7 rounded-full px-2.5 text-[11px] max-w-full truncate ${
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15"
+                            }`}
+                            title={option}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedId(overlay.id)
+                              updateOverlay(overlay.id, { text: option })
+                            }}
+                          >
+                            {option}
+                          </Button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
                 <Input
                   value={overlay.text}
                   onChange={(e) => updateOverlay(overlay.id, { text: e.target.value })}

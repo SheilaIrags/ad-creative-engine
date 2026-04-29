@@ -59,6 +59,8 @@ function EditorContent() {
   const [headline, setHeadline] = useState("")
   const [overlayText, setOverlayText] = useState("")
   const [cta, setCta] = useState("")
+  const [headlineOptions, setHeadlineOptions] = useState<string[]>([])
+  const [overlayOptions, setOverlayOptions] = useState<string[]>([])
   const [ctaOptions, setCtaOptions] = useState<string[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -108,6 +110,22 @@ function EditorContent() {
             .filter((x): x is string => Boolean(x))
         )
       )
+      const allHeadlines = Array.from(
+        new Set(
+          resultsArray
+            .map((r) => r.headline)
+            .filter((x): x is string => Boolean(x))
+        )
+      )
+      const allOverlays = Array.from(
+        new Set(
+          resultsArray
+            .map((r) => r.overlay_text)
+            .filter((x): x is string => Boolean(x))
+        )
+      )
+      const fallbackHeadlines = selected?.headline ? [selected.headline] : []
+      const fallbackOverlays = selected?.overlay_text ? [selected.overlay_text] : []
       const fallbackCtas = selected?.cta ? [selected.cta] : []
 
       if (!selected) {
@@ -123,6 +141,10 @@ function EditorContent() {
         setHeadline(selected.headline || "")
         setOverlayText(selected.overlay_text || "")
         setCta(selected.cta || "")
+        setHeadlineOptions(
+          allHeadlines.length > 0 ? allHeadlines : fallbackHeadlines
+        )
+        setOverlayOptions(allOverlays.length > 0 ? allOverlays : fallbackOverlays)
         setCtaOptions(allCtas.length > 0 ? allCtas : fallbackCtas)
         setIsLoading(false)
       }
@@ -215,6 +237,8 @@ function EditorContent() {
           headline={headline}
           overlayText={overlayText}
           cta={cta}
+          headlineOptions={headlineOptions}
+          overlayOptions={overlayOptions}
           ctaOptions={ctaOptions}
         />
       </main>
