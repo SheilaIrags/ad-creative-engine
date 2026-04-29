@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowLeft, Download, RefreshCw, Pencil } from "lucide-react"
@@ -131,6 +131,34 @@ function AdCard({
 }
 
 export default function ResultsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="relative container mx-auto px-6 py-8 md:py-12">
+          <div className="space-y-8">
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-primary/10 border border-primary/20">
+                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                <span className="text-base font-medium text-foreground">
+                  Loading your results...
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <ResultsContent />
+    </Suspense>
+  )
+}
+
+function ResultsContent() {
   const searchParams = useSearchParams()
   const jobId = searchParams.get("job_id")
 
