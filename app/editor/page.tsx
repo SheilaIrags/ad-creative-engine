@@ -16,6 +16,39 @@ type GenerationResult = {
   direction_name?: string
 }
 
+function parseResultsPayload(input: unknown): GenerationResult[] {
+  let value = input
+
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value)
+    } catch {
+      return []
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value as GenerationResult[]
+  }
+
+  if (value && typeof value === "object") {
+    const nested = (value as { results?: unknown }).results
+    if (Array.isArray(nested)) {
+      return nested as GenerationResult[]
+    }
+    if (typeof nested === "string") {
+      try {
+        const parsedNested = JSON.parse(nested)
+        return Array.isArray(parsedNested) ? (parsedNested as GenerationResult[]) : []
+      } catch {
+        return []
+      }
+    }
+  }
+
+  return []
+}
+
 function EditorContent() {
   const searchParams = useSearchParams()
   const jobId = searchParams.get("job_id")
@@ -43,24 +76,29 @@ function EditorContent() {
         return
       }
 
-      const res = await fetch(`/api/results/${jobId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+      let resultsArray: GenerationResult[] = []
+      const maxAttempts = 30
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const res = await fetch(`/api/results/${jobId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
 
-      const json = await res.json()
-      if (!res.ok) {
-        throw new Error(json?.message || "Failed to load generation results")
+        const json = await res.json()
+        if (!res.ok) {
+          throw new Error(json?.message || "Failed to load generation results")
+        }
+
+        resultsArray = parseResultsPayload(json?.results)
+        if (json?.status === "complete" && resultsArray.length > 0) {
+          break
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 3000))
       }
 
-      let results = json?.results ?? []
-      if (typeof results === "string") {
-        results = JSON.parse(results)
-      }
-
-      const resultsArray = Array.isArray(results) ? (results as GenerationResult[]) : []
       const selected = resultsArray[variationIndex]
 
       const allCtas = Array.from(
@@ -82,9 +120,9 @@ function EditorContent() {
 
       if (!cancelled) {
         setImageUrl(selected.image_url || "")
-        setHeadline(selected.headline || "")
-        setOverlayText(selected.overlay_text || "")
-        setCta(selected.cta || "")
+        setHeadline(selected.headline || "Your Headline Here")
+        setOverlayText(selected.overlay_text || "Overlay Text")
+        setCta(selected.cta || "Call to Action")
         setCtaOptions(allCtas.length > 0 ? allCtas : fallbackCtas)
         setIsLoading(false)
       }

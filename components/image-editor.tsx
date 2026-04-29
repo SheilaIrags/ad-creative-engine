@@ -76,8 +76,13 @@ export function ImageEditor({
   cta = "Call to Action",
   ctaOptions,
 }: ImageEditorProps) {
-  const resolvedCtaOptions =
-    ctaOptions && ctaOptions.length > 0 ? ctaOptions : [cta]
+  const resolvedCtaOptions = Array.from(
+    new Set(
+      (ctaOptions && ctaOptions.length > 0 ? ctaOptions : [cta]).filter(
+        (option): option is string => Boolean(option && option.trim())
+      )
+    )
+  )
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
   const [image, setImage] = useState<HTMLImageElement | null>(null)
@@ -281,16 +286,19 @@ export function ImageEditor({
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {resolvedCtaOptions.map((option) => (
+                  (() => {
+                    const isActive = textOverlays.find((o) => o.id === "cta")?.text === option
+                    return (
                   <Button
                     key={option}
                     type="button"
                     size="sm"
-                    variant={
-                      textOverlays.find((o) => o.id === "cta")?.text === option
-                        ? "default"
-                        : "outline"
-                    }
-                    className="h-8 rounded-full px-3 text-xs max-w-full truncate"
+                    variant={isActive ? "default" : "outline"}
+                    className={`h-8 rounded-full px-3 text-xs max-w-full truncate ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "border-primary/50 text-primary hover:bg-primary/10"
+                    }`}
                     title={option}
                     onClick={() => {
                       setSelectedId("cta")
@@ -299,6 +307,8 @@ export function ImageEditor({
                   >
                     {option}
                   </Button>
+                    )
+                  })()
                 ))}
               </div>
             </CardContent>
