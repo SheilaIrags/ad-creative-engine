@@ -1,6 +1,11 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sparkles, Wand2, Download, ArrowRight } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Ktizai",
+}
 
 export default function LandingPage() {
   return (

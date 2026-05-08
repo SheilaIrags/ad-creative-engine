@@ -35,6 +35,10 @@ export default function GeneratePage() {
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+  useEffect(() => {
+    document.title = "Ktizai"
+  }, [])
+
   const handleFileSelect = useCallback((file: File) => {
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader()

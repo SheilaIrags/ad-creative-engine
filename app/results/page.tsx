@@ -130,6 +130,10 @@ function AdCard({
 }
 
 export default function ResultsPage() {
+  useEffect(() => {
+    document.title = "Ktizai"
+  }, [])
+
   return (
     <Suspense
       fallback={

@@ -33,6 +33,10 @@ function EditorContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    document.title = "Ktizai"
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
 
     const load = async () => {

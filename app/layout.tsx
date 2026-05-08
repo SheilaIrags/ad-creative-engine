@@ -7,8 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Image Text Overlay Editor',
-  description: 'Add draggable text overlays to images with Konva.js canvas editor',
+  title: "Ktizai — AI Ad Creative Generator",
+  description:
+    "Generate stunning ad creatives in seconds with AI. Describe your product and get 3 unique ad angles instantly.",
   generator: 'v0.app',
   icons: {
     icon: [
